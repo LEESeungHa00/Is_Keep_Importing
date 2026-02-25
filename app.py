@@ -6,7 +6,7 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
 # --- 1. 페이지 설정 (캐주얼하고 직관적인 컨셉) ---
-st.set_page_config(page_title="Still Importing?", page_icon="🕵️‍♂️", layout="wide")
+st.set_page_config(page_title="Who Stopped Importing?", page_icon="🕵️‍♂️", layout="wide")
 
 st.markdown("<h1 style='text-align: center; color: #1f77b4;'>🕵️‍♂️ 수입량 감소/중단 업체 찾기</h1>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: center; color: #666; font-size: 18px;'>수입량이 끊기거나 급감한 업체를 빠르고 정확하게 찾아내는 레이더 🚨</p>", unsafe_allow_html=True)
