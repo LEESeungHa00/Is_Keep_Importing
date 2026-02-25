@@ -10,6 +10,7 @@ st.set_page_config(page_title="Who Stopped Importing?", page_icon="🕵️‍♂
 
 st.markdown("<h1 style='text-align: center; color: #1f77b4;'>🕵️‍♂️ 수입량 감소/중단 업체 찾기</h1>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: center; color: #666; font-size: 18px;'>수입량이 끊기거나 급감한 업체를 빠르고 정확하게 찾아내는 레이더 🚨</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #888; font-size: 14px;'>📊 <b>데이터 단위 기준:</b> 중량(KG) &nbsp;|&nbsp; 금액(USD) &nbsp;|&nbsp; 단가(USD/KG)</p>", unsafe_allow_html=True)
 st.markdown("---")
 
 # --- 2. 데이터 업로드 ---
