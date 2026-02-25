@@ -211,6 +211,7 @@ if uploaded_file:
                                'Avg Volume', 'Arithmetic Avg Price', 'Weighted Avg Price', 'Existing Trade Line']]
         
         # UI 표출 형식 모두 소수점 2자리(%.2f)로 통일
+        # UI 표출 형식 오류 해결 (콤마 제거 및 printf 스타일로 변경)
         st.dataframe(
             display_df,
             use_container_width=True,
@@ -218,12 +219,12 @@ if uploaded_file:
             column_config={
                 "Status": st.column_config.TextColumn("상태", width="small"),
                 "Raw Importer Name": st.column_config.TextColumn("업체명", width="medium"),
-                "Current Volume": st.column_config.NumberColumn("최근 수입량", format="%,.2f"),
-                "Past Volume": st.column_config.NumberColumn("직전 수입량", format="%,.2f"),
-                "Volume Decrease": st.column_config.NumberColumn("감소량 ▼", format="%,.2f"),
-                "Avg Volume": st.column_config.NumberColumn("평균 수입량", format="%,.2f"),
-                "Arithmetic Avg Price": st.column_config.NumberColumn("산술단가", format="$%,.2f"),
-                "Weighted Avg Price": st.column_config.NumberColumn("가중단가", format="$%,.2f"),
+                "Current Volume": st.column_config.NumberColumn("최근 수입량", format="%.2f"),
+                "Past Volume": st.column_config.NumberColumn("직전 수입량", format="%.2f"),
+                "Volume Decrease": st.column_config.NumberColumn("감소량 ▼", format="%.2f"),
+                "Avg Volume": st.column_config.NumberColumn("평균 수입량", format="%.2f"),
+                "Arithmetic Avg Price": st.column_config.NumberColumn("산술단가", format="$%.2f"),
+                "Weighted Avg Price": st.column_config.NumberColumn("가중단가", format="$%.2f"),
                 "Existing Trade Line": st.column_config.TextColumn("기존 거래국/수출업체", width="large")
             }
         )
