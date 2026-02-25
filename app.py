@@ -192,7 +192,7 @@ if uploaded_file:
         kpi3.metric(label="총 감소 수입량 (KG)", value=f"{final_df['Volume Decrease'].sum():,.2f}")
         st.markdown("---")
 
-        st.markdown("#### 📊 Top 10 수입 물량 급감 업체 (계단식 정렬)")
+        st.markdown("#### 📊 Top 10 수입 물량 급감 업체")
         
         # 🌟 차트: 오직 감소량(Volume Decrease) 기준으로 내림차순 Top 10 추출
         chart_df = final_df.sort_values(by='Volume Decrease', ascending=False).head(10)
