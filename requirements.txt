@@ -4,3 +4,4 @@ numpy
 altair
 python-dateutil
 openpyxl
+plotly
