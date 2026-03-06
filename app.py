@@ -6,9 +6,9 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
 # --- 1. 페이지 설정 ---
-st.set_page_config(page_title="Who Stopped Trading?", page_icon="🕵️‍♂️", layout="wide")
+st.set_page_config(page_title="Who Stopped Importing?", page_icon="🕵️‍♂️", layout="wide")
 
-st.markdown("<h1 style='text-align: center; color: #1f77b4;'>🕵️‍♂️ Who Stopped Trading?</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; color: #1f77b4;'>🕵️‍♂️ Who Stopped Importing? (누가 수입을 멈췄을까)</h1>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: center; color: #666; font-size: 18px; margin-bottom: 5px;'>수입/수출 양방향의 <b>이탈 및 환승(공급선 이동)</b>을 독립적으로 추적하는 듀얼 레이더 🚨</p>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: center; color: #888; font-size: 14px;'>📊 <b>데이터 단위 기준:</b> 중량(KG) &nbsp;|&nbsp; 금액(USD) &nbsp;|&nbsp; 단가(USD/KG)</p>", unsafe_allow_html=True)
 st.markdown("---")
@@ -141,8 +141,7 @@ if uploaded_file:
         kpi3.metric(label="총 증발된 수입량 (KG)", value=f"{imp_result_df['Volume Decrease'].sum():,.2f}")
         st.markdown("---")
 
-        # 🌟 Plotly 적용: Top 10 바 차트 (드래그 박스 줌, 호버, 정렬 완벽 지원) 🌟
-        st.markdown("#### 📊 Top 10 수입 물량 급감 업체")
+        st.markdown("#### 📊 Top 10 수입 물량 급감 업체 (마우스 드래그 박스 줌인 지원)")
         chart_df = imp_result_df.sort_values(by='Volume Decrease', ascending=False).head(10)
         
         fig_bar = px.bar(
@@ -153,16 +152,16 @@ if uploaded_file:
             color_discrete_sequence=['#ff4b4b']
         )
         fig_bar.update_layout(
-            xaxis={'categoryorder':'total descending'}, # 완벽한 내림차순 계단식 정렬
+            xaxis={'categoryorder':'total descending'},
             margin=dict(l=0, r=0, t=20, b=0),
             height=350,
-            dragmode='zoom' # 드래그 시 박스 형태로 줌인
+            dragmode='zoom'
         )
         st.plotly_chart(fig_bar, use_container_width=True)
 
         # 수입사 표
         st.markdown("---")
-        st.markdown("#### 📉 수입업체 (Importer) 관점 : 이탈 현황")
+        st.markdown("#### 📉 수입업체 (Importer) 중심 이탈 현황 (타격이 큰 순서 정렬)")
 
         imp_detail_df = filtered_df[filtered_df['Raw Importer Name'].isin(target_importers)].copy()
         imp_detail_df['Export Country'] = imp_detail_df['Export Country'].fillna('Unknown')
@@ -230,14 +229,18 @@ if uploaded_file:
 
 
     # =========================================================================
-    # 🌟 수출사 레이더
+    # 🌟 수출사 레이더 (수출사 한국 수출 총량 기준 듀얼 독립 필터링) 🌟
     # =========================================================================
     st.markdown("---")
-    st.markdown("#### 🔄 수출사(Exporter) 관점 : 한국 시장 이탈 및 환승 현황")
+    st.markdown("#### 🔄 수출사(Exporter) 관점: 한국 시장 이탈 및 환승 현황 (타격이 큰 순서 정렬)")
 
-    exp_curr_total = curr_df.groupby('Exporter')['Volume'].sum().reset_index(name='Current Total')
-    exp_past_total = past_df.groupby('Exporter')['Volume'].sum().reset_index(name='Past Total')
-    exp_radar = pd.merge(exp_past_total, exp_curr_total, on='Exporter', how='outer').fillna(0)
+    # 🌟 수출국가 컬럼을 연산 그룹에 포함 🌟
+    curr_df['Export Country'] = curr_df['Export Country'].fillna('Unknown')
+    past_df['Export Country'] = past_df['Export Country'].fillna('Unknown')
+
+    exp_curr_total = curr_df.groupby(['Export Country', 'Exporter'])['Volume'].sum().reset_index(name='Current Total')
+    exp_past_total = past_df.groupby(['Export Country', 'Exporter'])['Volume'].sum().reset_index(name='Past Total')
+    exp_radar = pd.merge(exp_past_total, exp_curr_total, on=['Export Country', 'Exporter'], how='outer').fillna(0)
     
     exp_radar['Total Decrease'] = exp_radar['Past Total'] - exp_radar['Current Total']
     exp_radar = exp_radar[exp_radar['Total Decrease'] > 0] 
@@ -245,11 +248,13 @@ if uploaded_file:
     if not exp_radar.empty:
         target_exporters = exp_radar['Exporter'].tolist()
         exp_detail_df = filtered_df[filtered_df['Exporter'].isin(target_exporters)].copy()
+        exp_detail_df['Export Country'] = exp_detail_df['Export Country'].fillna('Unknown')
         
-        exp_curr_detail = exp_detail_df[(exp_detail_df['Date'] >= curr_start) & (exp_detail_df['Date'] <= curr_end)].groupby(['Exporter', 'Raw Importer Name'])['Volume'].sum().reset_index(name='Current Volume')
-        exp_past_detail = exp_detail_df[(exp_detail_df['Date'] >= past_start) & (exp_detail_df['Date'] <= past_end)].groupby(['Exporter', 'Raw Importer Name'])['Volume'].sum().reset_index(name='Past Volume')
+        # 수출국가 포함하여 1:1 디테일 계산
+        exp_curr_detail = exp_detail_df[(exp_detail_df['Date'] >= curr_start) & (exp_detail_df['Date'] <= curr_end)].groupby(['Export Country', 'Exporter', 'Raw Importer Name'])['Volume'].sum().reset_index(name='Current Volume')
+        exp_past_detail = exp_detail_df[(exp_detail_df['Date'] >= past_start) & (exp_detail_df['Date'] <= past_end)].groupby(['Export Country', 'Exporter', 'Raw Importer Name'])['Volume'].sum().reset_index(name='Past Volume')
         
-        exp_merged = pd.merge(exp_past_detail, exp_curr_detail, on=['Exporter', 'Raw Importer Name'], how='outer').fillna(0)
+        exp_merged = pd.merge(exp_past_detail, exp_curr_detail, on=['Export Country', 'Exporter', 'Raw Importer Name'], how='outer').fillna(0)
         exp_merged['Volume Change'] = exp_merged['Current Volume'] - exp_merged['Past Volume']
         
         def get_exp_trend(row):
@@ -270,13 +275,15 @@ if uploaded_file:
         num_cols_exp = ['Past Volume', 'Current Volume', 'Volume Change']
         final_exp_df[num_cols_exp] = final_exp_df[num_cols_exp].round(2)
 
-        exp_total_decrease = final_exp_df.groupby('Exporter')['Volume Change'].sum().reset_index(name='Total Decrease')
-        final_exp_df = final_exp_df.merge(exp_total_decrease, on='Exporter')
+        # 🌟 정렬 기준: 1.수출사 전체 타격량 2.국가 3.수출사명 4.한국수입사별 증감
+        exp_total_decrease = final_exp_df.groupby(['Export Country', 'Exporter'])['Volume Change'].sum().reset_index(name='Total Decrease')
+        final_exp_df = final_exp_df.merge(exp_total_decrease, on=['Export Country', 'Exporter'])
         
-        final_exp_df = final_exp_df.sort_values(by=['Total Decrease', 'Exporter', 'Volume Change'], ascending=[True, True, False])
+        final_exp_df = final_exp_df.sort_values(by=['Total Decrease', 'Export Country', 'Exporter', 'Volume Change'], ascending=[True, True, True, False])
 
-        final_exp_df = final_exp_df[['Exporter', 'Trend', 'Raw Importer Name', 'Past Volume', 'Current Volume', 'Volume Change']]
+        final_exp_df = final_exp_df[['Export Country', 'Exporter', 'Trend', 'Raw Importer Name', 'Past Volume', 'Current Volume', 'Volume Change']]
         final_exp_df.rename(columns={
+            'Export Country': '수출국가',
             'Exporter': '해외 수출사',
             'Trend': '세부 추이',
             'Raw Importer Name': '한국 내 수입사',
@@ -285,7 +292,8 @@ if uploaded_file:
             'Volume Change': '거래량 증감 (+/-)'
         }, inplace=True)
 
-        final_exp_df.set_index(['해외 수출사'], inplace=True)
+        # 🌟 MultiIndex: 국가와 수출사를 묶어서 완벽한 계층형 표 생성
+        final_exp_df.set_index(['수출국가', '해외 수출사'], inplace=True)
 
         st.dataframe(final_exp_df, use_container_width=True)
     else:
@@ -295,7 +303,7 @@ if uploaded_file:
     # --- 7. 1:1 장기 거래 추이 시각화 ---
     # =========================================================================
     st.markdown("---")
-    st.markdown("#### 📈 특정 수입사-수출사 1:1 장기 거래 추이")
+    st.markdown("#### 📈 특정 수입사-수출사 1:1 장기 거래 추이 (전체 기간 마우스 드래그 박스 줌 지원)")
     
     col_imp, col_exp = st.columns(2)
     all_importers = sorted(filtered_df['Raw Importer Name'].dropna().unique().tolist())
@@ -322,7 +330,6 @@ if uploaded_file:
             m1.metric("📦 1:1 총 누적 거래량", f"{total_1to1_volume:,.2f} KG")
             m2.metric("🧾 1건당 평균 거래량", f"{avg_per_transaction:,.2f} KG")
             
-            # 🌟 Plotly 적용: 라인 차트 (더블클릭 리셋, 영역 드래그 줌인) 🌟
             fig_line = px.line(
                 monthly_trend, 
                 x='Month', 
@@ -334,7 +341,7 @@ if uploaded_file:
             fig_line.update_layout(
                 margin=dict(l=0, r=0, t=20, b=0),
                 height=350,
-                dragmode='zoom' # 드래그 시 박스 형태로 특정 기간 줌인
+                dragmode='zoom'
             )
             st.plotly_chart(fig_line, use_container_width=True)
             
